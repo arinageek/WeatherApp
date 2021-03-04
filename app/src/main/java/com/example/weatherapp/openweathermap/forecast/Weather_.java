@@ -1,10 +1,10 @@
 
-package com.example.weatherapp.openweathermap;
+package com.example.weatherapp.openweathermap.forecast;
 
 import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
 
-public class Weather {
+public class Weather_ {
 
     @SerializedName("id")
     @Expose

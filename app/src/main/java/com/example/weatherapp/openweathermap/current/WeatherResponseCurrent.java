@@ -1,11 +1,13 @@
 
-package com.example.weatherapp.openweathermap;
+package com.example.weatherapp.openweathermap.current;
 
 import java.util.List;
+
+import com.example.weatherapp.openweathermap.current.Wind;
 import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
 
-public class WeatherResponse {
+public class WeatherResponseCurrent {
 
     @SerializedName("coord")
     @Expose

@@ -1,18 +1,20 @@
 package com.example.weatherapp.viewmodels;
 
 import android.app.Application;
-import android.content.pm.LauncherApps;
 import android.util.Log;
-import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.lifecycle.AndroidViewModel;
 import androidx.lifecycle.LiveData;
+import androidx.lifecycle.MutableLiveData;
 
 import com.example.weatherapp.database.CityRepository;
 import com.example.weatherapp.database.entities.City;
-import com.example.weatherapp.openweathermap.WeatherResponse;
-import com.example.weatherapp.openweathermap.WeatherService;
+import com.example.weatherapp.openweathermap.current.WeatherResponseCurrent;
+import com.example.weatherapp.openweathermap.current.WeatherServiceCurrent;
+import com.example.weatherapp.openweathermap.forecast.Daily;
+import com.example.weatherapp.openweathermap.forecast.WeatherResponseForecast;
+import com.example.weatherapp.openweathermap.forecast.WeatherServiceForecast;
 
 import java.util.List;
 
@@ -26,6 +28,11 @@ public class HomeViewModel extends AndroidViewModel {
 
     private CityRepository repository;
     private LiveData<List<City>> allCities;
+    public MutableLiveData<Double> _degrees = new MutableLiveData<>();
+    public MutableLiveData<String> _description = new MutableLiveData<>("");
+    public MutableLiveData<String> _city = new MutableLiveData<>("");
+    public MutableLiveData<String> _icon = new MutableLiveData<>("http://openweathermap.org/img/wn/10d@2x.png");
+    public MutableLiveData<List<Daily>> _daily = new MutableLiveData<>();
 
     public HomeViewModel(@NonNull Application application) {
         super(application);
@@ -33,55 +40,78 @@ public class HomeViewModel extends AndroidViewModel {
         allCities = repository.getAllCities();
     }
 
-    public void insert(City city){
+    public void insert(City city) {
         repository.insert(city);
     }
-    public void update(City city){
+
+    public void update(City city) {
         repository.update(city);
     }
-    public void delete(City city){
+
+    public void delete(City city) {
         repository.delete(city);
     }
+
     public LiveData<List<City>> getAllCities() {
         return allCities;
     }
-    public void deleteAllCities(){ repository.deleteAllCities();}
+
+    public void deleteAllCities() {
+        repository.deleteAllCities();
+    }
+
 
     public void getCurrentData(String city) {
         Retrofit retrofit = new Retrofit.Builder()
                 .baseUrl("https://api.openweathermap.org/")
                 .addConverterFactory(GsonConverterFactory.create())
                 .build();
-        WeatherService service = retrofit.create(WeatherService.class);
-        Call<WeatherResponse> call = service.getCurrentWeatherData(city, "metric", "f955e39cc8ec50741acb39727ead90dd");
-        call.enqueue(new Callback<WeatherResponse>() {
+        WeatherServiceCurrent service = retrofit.create(WeatherServiceCurrent.class);
+        Call<WeatherResponseCurrent> call = service.getCurrentWeatherData(city, "ru", "metric", "f955e39cc8ec50741acb39727ead90dd");
+        call.enqueue(new Callback<WeatherResponseCurrent>() {
             @Override
-            public void onResponse(Call<WeatherResponse> call, Response<WeatherResponse> response) {
+            public void onResponse(Call<WeatherResponseCurrent> call, Response<WeatherResponseCurrent> response) {
                 if (response.code() == 200) {
-                    WeatherResponse weatherResponse = response.body();
+                    WeatherResponseCurrent weatherResponse = response.body();
                     assert weatherResponse != null;
-
-                    String stringBuilder = "Country: " +
-                            weatherResponse.sys.country +
-                            "\n" +
-                            "Temperature: " +
-                            weatherResponse.main.temp +
-                            "\n" +
-                            "Humidity: " +
-                            weatherResponse.main.humidity +
-                            "\n" +
-                            "Pressure: " +
-                            weatherResponse.main.pressure;
-
-                    Log.d("HomeViewModel", stringBuilder);
+                    _degrees.postValue(weatherResponse.main.temp);
+                    _description.postValue(weatherResponse.weather.get(0).description);
+                    _city.postValue(weatherResponse.name);
+                    _icon.postValue("https://openweathermap.org/img/wn/" + weatherResponse.weather.get(0).icon + "@2x.png");
+                    getForecastData(weatherResponse.coord.lat, weatherResponse.coord.lon);
                 }
             }
 
             @Override
-            public void onFailure(Call<WeatherResponse> call, Throwable t) {
+            public void onFailure(Call<WeatherResponseCurrent> call, Throwable t) {
+                Log.d("HomeViewModel", t.getMessage());
+            }
+        });
+    }
+
+    public void getForecastData(Double lat, Double lon) {
+        Retrofit retrofit = new Retrofit.Builder()
+                .baseUrl("https://api.openweathermap.org/")
+                .addConverterFactory(GsonConverterFactory.create())
+                .build();
+        WeatherServiceForecast service = retrofit.create(WeatherServiceForecast.class);
+        Call<WeatherResponseForecast> call = service.getForecastWeatherData(lat, lon, "minutely,hourly,alerts", "ru", "metric", "f955e39cc8ec50741acb39727ead90dd");
+        call.enqueue(new Callback<WeatherResponseForecast>() {
+            @Override
+            public void onResponse(Call<WeatherResponseForecast> call, Response<WeatherResponseForecast> response) {
+                if (response.code() == 200) {
+                    WeatherResponseForecast weatherResponse = response.body();
+                    assert weatherResponse != null;
+                    _daily.postValue(weatherResponse.daily);
+                }
+            }
+
+            @Override
+            public void onFailure(Call<WeatherResponseForecast> call, Throwable t) {
                 Log.d("HomeViewModel", t.getMessage());
             }
         });
     }
 
 }
+
