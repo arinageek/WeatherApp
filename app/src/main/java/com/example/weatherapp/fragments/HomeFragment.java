@@ -55,24 +55,34 @@ public class HomeFragment extends Fragment {
         binding.setLifecycleOwner(this);
         binding.setViewmodel(homeViewModel);
 
+        //Initial data shown on home screen
         homeViewModel.getCurrentData("Moscow");
 
         //RecyclerView and Adapter
         binding.recyclerView.setLayoutManager(new LinearLayoutManager(getContext(), LinearLayoutManager.HORIZONTAL, false));
-        adapter = new ForecastAdapter(homeViewModel._daily);
+        //adapter = new ForecastAdapter(homeViewModel._daily);
+        adapter = new ForecastAdapter();
         binding.recyclerView.setAdapter(adapter);
         homeViewModel._daily.observe(getViewLifecycleOwner(), dailyList -> {
             adapter.submitList(dailyList);
         });
 
+        //OnClickListeners
         binding.toolbar.searchButton.setOnClickListener(v -> enableSearchMode());
         binding.toolbar.checkButton.setOnClickListener(v -> {
+            binding.star.setImageResource(R.drawable.ic_baseline_star_border_24);
             if(binding.toolbar.etSearchField.getText().toString().trim().isEmpty()){
                 Toast.makeText(getContext(), "Please enter a valid city", Toast.LENGTH_SHORT).show();
             }else{
                 homeViewModel.getCurrentData(binding.toolbar.etSearchField.getText().toString().trim());
             }
             disableSearchMode();
+        });
+        binding.star.setOnClickListener(v -> {
+            if(binding.textCityName.getText().toString().trim() != ""){
+                homeViewModel.insert(binding.textCityName.getText().toString().trim());
+                binding.star.setImageResource(R.drawable.ic_baseline_filled_star_24);
+            }
         });
 
         return view;

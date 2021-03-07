@@ -16,6 +16,8 @@ import com.example.weatherapp.openweathermap.forecast.Daily;
 import com.example.weatherapp.openweathermap.forecast.WeatherResponseForecast;
 import com.example.weatherapp.openweathermap.forecast.WeatherServiceForecast;
 
+import java.text.DateFormat;
+import java.util.Date;
 import java.util.List;
 
 import retrofit2.Call;
@@ -29,6 +31,7 @@ public class HomeViewModel extends AndroidViewModel {
     private CityRepository repository;
     private LiveData<List<City>> allCities;
     public MutableLiveData<Double> _degrees = new MutableLiveData<>();
+    public MutableLiveData<String> _date = new MutableLiveData<>();
     public MutableLiveData<String> _description = new MutableLiveData<>("");
     public MutableLiveData<String> _city = new MutableLiveData<>("");
     public MutableLiveData<String> _icon = new MutableLiveData<>("http://openweathermap.org/img/wn/10d@2x.png");
@@ -40,8 +43,8 @@ public class HomeViewModel extends AndroidViewModel {
         allCities = repository.getAllCities();
     }
 
-    public void insert(City city) {
-        repository.insert(city);
+    public void insert(String city) {
+        repository.insert(new City(city, false));
     }
 
     public void update(City city) {
@@ -60,6 +63,9 @@ public class HomeViewModel extends AndroidViewModel {
         repository.deleteAllCities();
     }
 
+   /*public boolean isCitySaved(String name){
+        return repository.isCitySaved(name);
+    }*/
 
     public void getCurrentData(String city) {
         Retrofit retrofit = new Retrofit.Builder()
@@ -102,6 +108,7 @@ public class HomeViewModel extends AndroidViewModel {
                 if (response.code() == 200) {
                     WeatherResponseForecast weatherResponse = response.body();
                     assert weatherResponse != null;
+                    Log.d("HomeViewModel", _daily.toString());
                     _daily.postValue(weatherResponse.daily);
                 }
             }

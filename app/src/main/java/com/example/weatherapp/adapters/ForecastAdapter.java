@@ -18,17 +18,20 @@ import com.example.weatherapp.openweathermap.forecast.Daily;
 import com.example.weatherapp.openweathermap.forecast.WeatherResponseForecast;
 import com.squareup.picasso.Picasso;
 
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.List;
 
 import static com.example.weatherapp.StringUtil.formatDegrees;
 
 public class ForecastAdapter extends ListAdapter<Daily, ForecastAdapter.ViewHolder> {
 
-    private MutableLiveData<List<Daily>> list;
+    //private MutableLiveData<List<Daily>> list;
 
-    public ForecastAdapter(MutableLiveData<List<Daily>> list_) {
+    public ForecastAdapter() {
         super(DIFF_CALLBACK);
-        list = list_;
+        //list = list_;
     }
 
     private static final DiffUtil.ItemCallback<Daily> DIFF_CALLBACK = new DiffUtil.ItemCallback<Daily>() {
@@ -53,10 +56,12 @@ public class ForecastAdapter extends ListAdapter<Daily, ForecastAdapter.ViewHold
 
     @Override
     public void onBindViewHolder(ViewHolder holder, final int position) {
-        if(!list.getValue().isEmpty()){
-            holder.binding.degrees.setText(formatDegrees(list.getValue().get(position).temp.day));
-            holder.binding.day.setText("Чт, 22"); // for now
-            Picasso.get().load("https://openweathermap.org/img/wn/"+list.getValue().get(position).weather.get(0).icon+"@2x.png")
+        if(!getCurrentList().isEmpty()){
+            SimpleDateFormat sd = new SimpleDateFormat("dd-MMM");
+            String date = sd.format(new Date((long)getItem(position).dt * 1000));
+            holder.binding.day.setText(date);
+            holder.binding.degrees.setText(formatDegrees(getItem(position).temp.day));
+            Picasso.get().load("https://openweathermap.org/img/wn/"+getItem(position).weather.get(0).icon+"@2x.png")
                     .into(holder.binding.icon);
         }
     }

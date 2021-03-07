@@ -34,7 +34,7 @@ public class Current {
     public Double dewPoint;
     @SerializedName("uvi")
     @Expose
-    public Integer uvi;
+    public Double uvi;
     @SerializedName("clouds")
     @Expose
     public Integer clouds;

@@ -32,4 +32,8 @@ public interface CityDao {
     @Query("SELECT * FROM cities_table")
     LiveData<List<City>> getAllCities();
 
+    @Query("SELECT EXISTS (SELECT 1 FROM cities_table WHERE name = :name_)")
+    Boolean isCitySaved(String name_);
+
+
 }

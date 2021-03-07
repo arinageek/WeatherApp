@@ -40,7 +40,7 @@
             <EditText
                 android:id="@+id/et_search_field"
                 android:layout_width="match_parent"
-                android:hint="Enter location"
+                android:hint="Введите город"
                 android:textColor="@color/black"
                 android:layout_alignParentEnd="true"
                 android:layout_height="wrap_content" />
