@@ -2,8 +2,8 @@ package com.example.weatherapp.database;
 
 import androidx.lifecycle.LiveData;
 import androidx.room.Dao;
-import androidx.room.Delete;
 import androidx.room.Insert;
+import androidx.room.OnConflictStrategy;
 import androidx.room.Query;
 import androidx.room.Transaction;
 import androidx.room.Update;
@@ -16,14 +16,14 @@ import java.util.List;
 @Dao
 public interface CityDao {
 
-    @Insert
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
     void insert(City city);
 
     @Update
     void update(City city);
 
-    @Delete
-    void delete(City city);
+    @Query("DELETE FROM cities_table WHERE cityId = :cityId")
+    void delete(int cityId);
 
     @Transaction
     @Query("DELETE FROM cities_table")
@@ -31,9 +31,5 @@ public interface CityDao {
 
     @Query("SELECT * FROM cities_table")
     LiveData<List<City>> getAllCities();
-
-    @Query("SELECT EXISTS (SELECT 1 FROM cities_table WHERE name = :name_)")
-    Boolean isCitySaved(String name_);
-
 
 }

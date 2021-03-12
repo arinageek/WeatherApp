@@ -1,92 +1,72 @@
 package com.example.weatherapp.adapters;
-
-import android.util.Log;
+import android.content.Intent;
+import android.net.Uri;
 import android.view.LayoutInflater;
+import android.view.View;
 import android.view.ViewGroup;
 
 import androidx.annotation.NonNull;
 import androidx.databinding.DataBindingUtil;
-import androidx.lifecycle.MutableLiveData;
 import androidx.recyclerview.widget.DiffUtil;
 import androidx.recyclerview.widget.ListAdapter;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.weatherapp.R;
-import com.example.weatherapp.database.entities.City;
-import com.example.weatherapp.databinding.FragmentSavedLocationsBinding;
 import com.example.weatherapp.databinding.SavedLocationsItemBinding;
-import com.example.weatherapp.openweathermap.current.WeatherResponseCurrent;
-import com.example.weatherapp.openweathermap.current.WeatherServiceCurrent;
+import com.example.weatherapp.openweathermap.group.List;
 import com.squareup.picasso.Picasso;
 
-import java.util.List;
-
-import retrofit2.Call;
-import retrofit2.Callback;
-import retrofit2.Response;
-import retrofit2.Retrofit;
-import retrofit2.converter.gson.GsonConverterFactory;
-
+import static androidx.core.content.ContextCompat.startActivity;
 import static com.example.weatherapp.StringUtil.formatDegrees;
 
-public class SavedLocationsAdapter extends ListAdapter<City, SavedLocationsAdapter.ViewHolder> {
-
-    //private MutableLiveData<List<WeatherResponseCurrent>> list;
+public class SavedLocationsAdapter extends ListAdapter<List, SavedLocationsAdapter.ViewHolder> {
 
     public SavedLocationsAdapter() {
         super(DIFF_CALLBACK);
-        //list = list_;
     }
 
-    private static final DiffUtil.ItemCallback<City> DIFF_CALLBACK = new DiffUtil.ItemCallback<City>() {
+    public int getCityIdAt(int pos){return getItem(pos).id;}
+
+    private static final DiffUtil.ItemCallback<List> DIFF_CALLBACK = new DiffUtil.ItemCallback<List>() {
         @Override
-        public boolean areItemsTheSame(@NonNull City oldItem, @NonNull City newItem) {
-            return oldItem.getName().equals(newItem.getName());
+        public boolean areItemsTheSame(@NonNull List oldItem, @NonNull List newItem) {
+            return oldItem.name.equals(newItem.name);
         }
 
         @Override
-        public boolean areContentsTheSame(@NonNull City oldItem, @NonNull City newItem) {
-            return oldItem.getName().equals(newItem.getName());
+        public boolean areContentsTheSame(@NonNull List oldItem, @NonNull List newItem) {
+            return oldItem.name.equals(newItem.name);
         }
     };
 
     @Override
     public ViewHolder onCreateViewHolder(ViewGroup viewGroup, int viewType) {
         LayoutInflater inflater = LayoutInflater.from(viewGroup.getContext());
-        SavedLocationsItemBinding binding = DataBindingUtil.inflate(inflater, R.layout.saved_locations_item, viewGroup,false);
-
+        SavedLocationsItemBinding binding = DataBindingUtil.inflate(inflater, R.layout.saved_locations_item, viewGroup, false);
         return new ViewHolder(binding);
     }
 
     @Override
     public void onBindViewHolder(ViewHolder holder, final int position) {
-        if(!getCurrentList().isEmpty()){
-            Retrofit retrofit = new Retrofit.Builder()
-                    .baseUrl("https://api.openweathermap.org/")
-                    .addConverterFactory(GsonConverterFactory.create())
-                    .build();
-            WeatherServiceCurrent service = retrofit.create(WeatherServiceCurrent.class);
 
-            Call<WeatherResponseCurrent> call = service.getCurrentWeatherData(getItem(position).getName(), "ru", "metric", "f955e39cc8ec50741acb39727ead90dd");
-            call.enqueue(new Callback<WeatherResponseCurrent>() {
-                @Override
-                public void onResponse(Call<WeatherResponseCurrent> call, Response<WeatherResponseCurrent> response) {
-                    if (response.code() == 200) {
-                        WeatherResponseCurrent weatherResponse = response.body();
-                        assert weatherResponse != null;
-                        holder.binding.degrees.setText(formatDegrees(weatherResponse.main.temp));
-                        holder.binding.city.setText(weatherResponse.name);
-                        Picasso.get().load("https://openweathermap.org/img/wn/"+weatherResponse.weather.get(0).icon+"@2x.png")
-                                .into(holder.binding.icon);
-                    }
-                }
+        holder.binding.mapsBtn.setOnClickListener(v -> {
+            Intent intent = new Intent(Intent.ACTION_VIEW,
+                    Uri.parse("geo:0,0?q=" + getItem(position).name));
+            startActivity(holder.binding.description.getContext(), intent, null);
+        });
+        holder.binding.expandableLayout.setVisibility(getItem(position).isExpanded ? View.VISIBLE: View.GONE);
+        holder.binding.description.setText(getItem(position).weather.get(0).description);
+        holder.binding.temp.setText("Темп: " + formatDegrees(getItem(position).main.temp));
+        holder.binding.tempMin.setText("Мин. темп: " + formatDegrees(getItem(position).main.tempMin));
+        holder.binding.tempMax.setText("Макс. темп: " + formatDegrees(getItem(position).main.tempMax));
+        holder.binding.pressure.setText("Давление: " + getItem(position).main.pressure);
+        holder.binding.humidity.setText("Влажность: " + getItem(position).main.humidity);
+        holder.binding.wind.setText("Скорость ветра: " + getItem(position).wind.speed.toString());
+        holder.binding.degrees.setText(formatDegrees(getItem(position).main.temp));
+        holder.binding.city.setText(getItem(position).name);
+        Picasso.get().load("https://openweathermap.org/img/wn/" + getItem(position).weather.get(0).icon + "@2x.png")
+                .into(holder.binding.icon);
 
-                @Override
-                public void onFailure(Call<WeatherResponseCurrent> call, Throwable t) {
-                    Log.d("SavedLocationsAdapter", t.getMessage());
-                }
-            });
-        }
     }
 
     class ViewHolder extends RecyclerView.ViewHolder {
@@ -95,7 +75,13 @@ public class SavedLocationsAdapter extends ListAdapter<City, SavedLocationsAdapt
         public ViewHolder(SavedLocationsItemBinding binding) {
             super(binding.getRoot());
             this.binding = binding;
+
+            this.binding.container.setOnClickListener(v -> {
+                getItem(getAdapterPosition()).isExpanded = !getItem(getAdapterPosition()).isExpanded;
+                notifyItemChanged(getAdapterPosition());
+            });
         }
+
     }
 
 }

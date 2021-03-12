@@ -1,13 +1,10 @@
 package com.example.weatherapp.adapters;
 
 import android.view.LayoutInflater;
-import android.view.View;
 import android.view.ViewGroup;
-import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.databinding.DataBindingUtil;
-import androidx.lifecycle.MutableLiveData;
 import androidx.recyclerview.widget.DiffUtil;
 import androidx.recyclerview.widget.ListAdapter;
 import androidx.recyclerview.widget.RecyclerView;
@@ -15,23 +12,17 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.example.weatherapp.R;
 import com.example.weatherapp.databinding.ForecastItemBinding;
 import com.example.weatherapp.openweathermap.forecast.Daily;
-import com.example.weatherapp.openweathermap.forecast.WeatherResponseForecast;
 import com.squareup.picasso.Picasso;
 
-import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
-import java.util.List;
 
 import static com.example.weatherapp.StringUtil.formatDegrees;
 
 public class ForecastAdapter extends ListAdapter<Daily, ForecastAdapter.ViewHolder> {
 
-    //private MutableLiveData<List<Daily>> list;
-
     public ForecastAdapter() {
         super(DIFF_CALLBACK);
-        //list = list_;
     }
 
     private static final DiffUtil.ItemCallback<Daily> DIFF_CALLBACK = new DiffUtil.ItemCallback<Daily>() {

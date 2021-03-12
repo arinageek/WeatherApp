@@ -43,7 +43,7 @@ public class Current {
     public Integer visibility;
     @SerializedName("wind_speed")
     @Expose
-    public Integer windSpeed;
+    public Double windSpeed;
     @SerializedName("wind_deg")
     @Expose
     public Integer windDeg;

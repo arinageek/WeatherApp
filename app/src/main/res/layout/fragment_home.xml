@@ -36,9 +36,35 @@
 
         </com.google.android.material.appbar.AppBarLayout>
 
-        <androidx.cardview.widget.CardView
+        <LinearLayout
+            android:id="@+id/layout_no_connection"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
+            android:orientation="vertical"
+            android:visibility="gone"
+            android:gravity="center">
+
+            <TextView
+                android:id="@+id/tv_connection"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textSize="24sp"
+                android:text="Нет подключения" />
+            <Button
+                android:id="@+id/retry_btn"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:gravity="center"
+                android:text="Обновить"/>
+
+        </LinearLayout>
+
+        <androidx.cardview.widget.CardView
+            android:id="@+id/cardView"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:visibility="visible"
             android:layout_below="@+id/app_bar_layout"
             android:layout_margin="16dp"
             android:backgroundTint="@color/white"
@@ -47,8 +73,8 @@
 
             <ImageView
                 android:id="@+id/star"
-                android:layout_width="40dp"
-                android:layout_height="40dp"
+                android:layout_width="30dp"
+                android:layout_height="30dp"
                 android:layout_gravity="end"
                 android:layout_margin="8dp"
                 android:src="@drawable/ic_baseline_star_border_24"/>
@@ -75,9 +101,9 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:fontFamily="sans-serif-light"
-                    android:text=""
+                    android:text="@{viewmodel._date}"
                     android:textColor="@color/black"
-                    android:textSize="20sp" />
+                    android:textSize="16sp" />
 
                 <TextView
                     android:id="@+id/text_degrees"
@@ -95,7 +121,7 @@
                     android:fontFamily="sans-serif-light"
                     android:text="@{viewmodel._description}"
                     android:textColor="@color/black"
-                    android:textSize="20sp" />
+                    android:textSize="16sp" />
 
                 <ImageView
                     android:id="@+id/weather_icon"

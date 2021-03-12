@@ -11,7 +11,7 @@ import androidx.sqlite.db.SupportSQLiteDatabase;
 
 import com.example.weatherapp.database.entities.City;
 
-@Database(entities = {City.class}, version = 1)
+@Database(entities = {City.class}, version = 6)
 public abstract class CityDatabase extends RoomDatabase {
 
     public static CityDatabase instance;
@@ -47,8 +47,7 @@ public abstract class CityDatabase extends RoomDatabase {
 
         @Override
         protected Void doInBackground(Void... voids) {
-            cityDao.insert(new City("Moscow", true));
-            cityDao.insert(new City("New York", false));
+            //cityDao.insert(new City("Москва",524901));
             return null;
         }
     }
