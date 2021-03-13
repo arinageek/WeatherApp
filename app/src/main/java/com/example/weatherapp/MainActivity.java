@@ -6,6 +6,7 @@ import androidx.fragment.app.Fragment;
 import android.os.Bundle;
 
 import com.example.weatherapp.fragments.HomeFragment;
+import com.example.weatherapp.fragments.NotificationFragment;
 import com.example.weatherapp.fragments.SavedLocationsFragment;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 
@@ -31,6 +32,9 @@ public class MainActivity extends AppCompatActivity {
                 break;
             case R.id.nav_saved_locations:
                 selectedFragment = new SavedLocationsFragment();
+                break;
+            case R.id.nav_alarm:
+                selectedFragment = new NotificationFragment();
                 break;
         }
         getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container, selectedFragment).commit();

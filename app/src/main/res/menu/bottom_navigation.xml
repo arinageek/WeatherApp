@@ -3,10 +3,15 @@
     <item
         android:id="@+id/nav_home"
         android:icon="@drawable/ic_baseline_wb_sunny_24"
-        android:title="Home"/>
+        android:title="Погода"/>
 
     <item
         android:id="@+id/nav_saved_locations"
         android:icon="@drawable/ic_baseline_star_border_24"
-        android:title="Saved"/>
+        android:title="Сохраненные"/>
+
+    <item
+        android:id="@+id/nav_alarm"
+        android:icon="@drawable/ic_baseline_access_alarm_24"
+        android:title="Оповещения"/>
 </menu>
