@@ -5,19 +5,38 @@ import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.content.Context;
 import android.content.ContextWrapper;
+import android.content.SharedPreferences;
 import android.os.Build;
+import android.util.Log;
 
 import androidx.core.app.NotificationCompat;
 
+import com.example.weatherapp.database.CityRepository;
+import com.example.weatherapp.openweathermap.current.WeatherResponseCurrent;
+import com.example.weatherapp.openweathermap.current.WeatherServiceCurrent;
+
+import java.text.SimpleDateFormat;
+import java.util.Date;
+
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
+import retrofit2.Retrofit;
+import retrofit2.converter.gson.GsonConverterFactory;
+
 
 public class NotificationHelper extends ContextWrapper {
-    public static final String channelID = "channelID";
-    public static final String channelName = "Channel Name";
+    public static final String channelID = "1";
+    public static final String channelName = "Channel 1";
 
     private NotificationManager mManager;
+    private String degrees;
+    private String city;
 
-    public NotificationHelper(Context base) {
+    public NotificationHelper(Context base, String degrees, String city) {
         super(base);
+        this.degrees = degrees;
+        this.city = city;
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             createChannel();
         }
@@ -38,10 +57,11 @@ public class NotificationHelper extends ContextWrapper {
         return mManager;
     }
 
+
     public NotificationCompat.Builder getChannelNotification() {
         return new NotificationCompat.Builder(getApplicationContext(), channelID)
-                .setContentTitle("Alarm!")
-                .setContentText("Your AlarmManager is working.")
+                .setContentTitle("Погода в "+city)
+                .setContentText("Температура: "+degrees)
                 .setSmallIcon(R.drawable.ic_baseline_cloud_24);
     }
 }

@@ -1,10 +1,15 @@
 package com.example.weatherapp.fragments;
 
+import android.Manifest;
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
+import android.location.Location;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.Bundle;
+import android.os.Looper;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -12,6 +17,8 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 import androidx.databinding.DataBindingUtil;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
@@ -21,12 +28,21 @@ import com.example.weatherapp.R;
 import com.example.weatherapp.adapters.ForecastAdapter;
 import com.example.weatherapp.databinding.FragmentHomeBinding;
 import com.example.weatherapp.viewmodels.HomeViewModel;
+import com.google.android.gms.location.FusedLocationProviderClient;
+import com.google.android.gms.location.LocationCallback;
+import com.google.android.gms.location.LocationRequest;
+import com.google.android.gms.location.LocationResult;
+import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.tasks.OnSuccessListener;
 
 public class HomeFragment extends Fragment {
 
     private static final int SEARCH_MODE_ENABLED = 1;
     private static final int SEARCH_MODE_DISABLED = 0;
+    private static final int REQUEST_CODE_LOCATION_PERMISSION = 1;
+
     private static HomeViewModel homeViewModel;
+    private static FusedLocationProviderClient fusedLocationClient;
     private int mode;
     private ForecastAdapter adapter;
     private FragmentHomeBinding binding;
@@ -40,6 +56,8 @@ public class HomeFragment extends Fragment {
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         binding = DataBindingUtil.inflate(inflater, R.layout.fragment_home, container, false);
         View view = binding.getRoot();
+
+        fusedLocationClient = LocationServices.getFusedLocationProviderClient(getActivity());
 
         //creating an instance of HomeViewModel and binding it
         homeViewModel = new ViewModelProvider(this).get(HomeViewModel.class);
@@ -56,9 +74,9 @@ public class HomeFragment extends Fragment {
             editor.apply();
         }
 
-        if(isConnected()){
-            homeViewModel.getCurrentData(sharedPref.getString("last_city", ""));
-        }else{
+        if (isConnected()) {
+            homeViewModel.getCurrentDataByName(sharedPref.getString("last_city", ""));
+        } else {
             disconnected();
         }
 
@@ -68,11 +86,17 @@ public class HomeFragment extends Fragment {
         binding.recyclerView.setAdapter(adapter);
 
         //ViewModel Observers
-        homeViewModel._daily.observe(getViewLifecycleOwner(), dailyList -> { adapter.submitList(dailyList); });
-        homeViewModel._cityId.observe(getViewLifecycleOwner(), id -> { cityId = id; });
+        homeViewModel._daily.observe(getViewLifecycleOwner(), dailyList -> {
+            adapter.submitList(dailyList);
+        });
+        homeViewModel._cityId.observe(getViewLifecycleOwner(), id -> {
+            cityId = id;
+        });
 
         //OnClickListeners
-        binding.retryBtn.setOnClickListener(v -> { if (isConnected()) connected(); });
+        binding.retryBtn.setOnClickListener(v -> {
+            if (isConnected()) connected();
+        });
 
         binding.toolbar.searchButton.setOnClickListener(v -> enableSearchMode());
 
@@ -84,7 +108,7 @@ public class HomeFragment extends Fragment {
                 editor.putString("last_city", binding.toolbar.etSearchField.getText().toString().trim());
                 editor.apply();
                 if (isConnected()) {
-                    homeViewModel.getCurrentData(binding.toolbar.etSearchField.getText().toString().trim());
+                    homeViewModel.getCurrentDataByName(binding.toolbar.etSearchField.getText().toString().trim());
                 } else {
                     disconnected();
                 }
@@ -105,9 +129,47 @@ public class HomeFragment extends Fragment {
             isStarred = !isStarred;
         });
 
+        binding.fab.setOnClickListener(v -> {
+            if (isConnected()) {
+                getCurrentLocation();
+            } else {
+                disconnected();
+            }
+        });
+
         return view;
     }
 
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == REQUEST_CODE_LOCATION_PERMISSION && grantResults.length > 0) {
+            if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                getCurrentLocation();
+            } else {
+                Toast.makeText(getActivity(), "Разрешение не предоставлено!", Toast.LENGTH_SHORT).show();
+            }
+        }
+    }
+
+    private void getCurrentLocation() {
+        if (ActivityCompat.checkSelfPermission(getActivity(), Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(getActivity(),
+                    new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
+                    REQUEST_CODE_LOCATION_PERMISSION);
+            return;
+        }
+        fusedLocationClient.getLastLocation().addOnSuccessListener(getActivity(), location -> {
+            if (location != null) {
+                double lat = location.getLatitude();
+                double lon = location.getLongitude();
+                homeViewModel.getCurrentDataByLocation(lat, lon);
+            }else{
+                Toast.makeText(getActivity(), "Что-то пошло не так. Проверьте, включен ли GPS!", Toast.LENGTH_SHORT).show();
+            }
+
+        });
+    }
 
     private void enableSearchMode() {
         binding.toolbar.toolbarSearchButton.setVisibility(View.GONE);

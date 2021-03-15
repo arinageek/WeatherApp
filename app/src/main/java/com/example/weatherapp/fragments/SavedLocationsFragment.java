@@ -1,6 +1,8 @@
 package com.example.weatherapp.fragments;
 
 import android.app.AlertDialog;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -37,14 +39,26 @@ public class SavedLocationsFragment extends Fragment {
         binding.setLifecycleOwner(this);
         binding.setViewmodel(savedViewModel);
 
+
         //RecyclerView and Adapter
         binding.recyclerView.setLayoutManager(new LinearLayoutManager(getContext(), LinearLayoutManager.VERTICAL, false));
         adapter = new SavedLocationsAdapter();
         binding.recyclerView.setAdapter(adapter);
 
         //ViewModel Observers
-        savedViewModel.getAllCities().observe(getViewLifecycleOwner(), cities -> savedViewModel.getCitiesWeather(cities));
-        savedViewModel.getWeather().observe(getViewLifecycleOwner(), weather -> adapter.submitList(weather.list));
+        savedViewModel.getAllCities().observe(getViewLifecycleOwner(), cities -> {
+            if(isConnected()){
+                savedViewModel.getCitiesWeather(cities);
+            }else{
+                disconnected();
+            }
+        });
+        savedViewModel.getWeather().observe(getViewLifecycleOwner(), weather -> { adapter.submitList(weather.list);});
+
+        //OnClickListeners
+        binding.retryBtn.setOnClickListener(v -> {
+            if (isConnected()) connected();
+        });
 
         new ItemTouchHelper(new ItemTouchHelper.SimpleCallback(0,
                 ItemTouchHelper.RIGHT) {
@@ -69,4 +83,24 @@ public class SavedLocationsFragment extends Fragment {
 
         return view;
     }
+
+    private boolean isConnected() {
+        //Check for internet connection
+        ConnectivityManager cm = (ConnectivityManager) getContext().getSystemService(getContext().CONNECTIVITY_SERVICE);
+        NetworkInfo activeNetwork = cm.getActiveNetworkInfo();
+        boolean isConnected = activeNetwork != null && activeNetwork.isConnectedOrConnecting();
+        return isConnected;
+    }
+
+    private void connected() {
+        binding.recyclerView.setVisibility(View.VISIBLE);
+        binding.layoutNoConnection.setVisibility(View.GONE);
+        getActivity().getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container, new SavedLocationsFragment()).commit();
+    }
+
+    private void disconnected() {
+        binding.layoutNoConnection.setVisibility(View.VISIBLE);
+        binding.recyclerView.setVisibility(View.GONE);
+    }
+
 }

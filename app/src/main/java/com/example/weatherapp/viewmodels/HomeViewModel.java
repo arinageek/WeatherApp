@@ -44,7 +44,9 @@ public class HomeViewModel extends AndroidViewModel {
         repository.delete(cityId);
     }
 
-    public void getCurrentData(String city) { repository.getCurrentData(city); }
+    public void getCurrentDataByName(String city) { repository.getCurrentDataByName(city); }
+
+    public void getCurrentDataByLocation(double lat, double lon) { repository.getCurrentDataByLocation(lat, lon); }
 
 }
 

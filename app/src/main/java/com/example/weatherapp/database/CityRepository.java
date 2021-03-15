@@ -8,6 +8,7 @@ import android.util.Log;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 
+import com.example.weatherapp.StringUtil;
 import com.example.weatherapp.database.entities.City;
 import com.example.weatherapp.openweathermap.current.WeatherResponseCurrent;
 import com.example.weatherapp.openweathermap.current.WeatherServiceCurrent;
@@ -30,7 +31,11 @@ import retrofit2.converter.gson.GsonConverterFactory;
 public class CityRepository {
     private CityDao cityDao;
     private LiveData<List<City>> allCities;
+
+    //SavedLocationsFragment
     private MutableLiveData<WeatherResponseGroup> citiesWeather = new MutableLiveData<>();
+
+    //HomeFragment
     private MutableLiveData<Double> _degrees = new MutableLiveData<>();
     private MutableLiveData<String> _date = new MutableLiveData<>();
     private MutableLiveData<String> _description = new MutableLiveData<>("");
@@ -45,6 +50,10 @@ public class CityRepository {
         allCities = cityDao.getAllCities();
     }
 
+
+    /* GETTERS */
+
+
     public void insert(City city) {
         new InsertCityAsyncTask(cityDao).execute(city);
     }
@@ -57,8 +66,12 @@ public class CityRepository {
         return allCities;
     }
 
-    public MutableLiveData<WeatherResponseGroup> getCitiesWeather() {return citiesWeather;}
+    //SavedLocations
+    public MutableLiveData<WeatherResponseGroup> getCitiesWeather() {
+        return citiesWeather;
+    }
 
+    //Home
     public MutableLiveData<Double> get_degrees() {
         return _degrees;
     }
@@ -79,20 +92,22 @@ public class CityRepository {
         return _cityId;
     }
 
-    public MutableLiveData<String> get_icon() {
-        return _icon;
-    }
+    public MutableLiveData<String> get_icon() { return _icon; }
 
     public MutableLiveData<List<Daily>> get_daily() {
         return _daily;
     }
 
+
+    /* FUNCTIONS */
+
+
     //SavedLocationsViewModel
-    public void getCitiesWeather(List<City> cities){
-        String locations="";
-        for(int i=0; i<cities.size(); i++){
-            locations+=cities.get(i).getCityId();
-            if(i!=cities.size()-1) locations+=",";
+    public void getCitiesWeather(List<City> cities) {
+        String locations = "";
+        for (int i = 0; i < cities.size(); i++) {
+            locations += cities.get(i).getCityId();
+            if (i != cities.size() - 1) locations += ",";
         }
         Retrofit retrofit = new Retrofit.Builder()
                 .baseUrl("https://api.openweathermap.org/")
@@ -107,25 +122,30 @@ public class CityRepository {
                 if (response.code() == 200) {
                     WeatherResponseGroup weatherResponse = response.body();
                     assert weatherResponse != null;
+
+                    //Change city names to Russian
+                    for (int i = 0; i < weatherResponse.list.size(); i++) {
+                        weatherResponse.list.get(i).name = cities.get(i).getName();
+                    }
                     citiesWeather.postValue(weatherResponse);
                 }
             }
 
             @Override
             public void onFailure(Call<WeatherResponseGroup> call, Throwable t) {
-                Log.d("SavedLocationsAdapter", t.getMessage());
+                Log.d("CityRepository", t.getMessage());
             }
         });
     }
 
     //HomeViewModel
-    public void getCurrentData(String city) {
+    public void getCurrentDataByName(String city) {
         Retrofit retrofit = new Retrofit.Builder()
                 .baseUrl("https://api.openweathermap.org/")
                 .addConverterFactory(GsonConverterFactory.create())
                 .build();
         WeatherServiceCurrent service = retrofit.create(WeatherServiceCurrent.class);
-        Call<WeatherResponseCurrent> call = service.getCurrentWeatherData(city, "ru", "metric", "f955e39cc8ec50741acb39727ead90dd");
+        Call<WeatherResponseCurrent> call = service.getCurrentWeatherDataByName(city, "ru", "metric", "f955e39cc8ec50741acb39727ead90dd");
         call.enqueue(new Callback<WeatherResponseCurrent>() {
             @Override
             public void onResponse(Call<WeatherResponseCurrent> call, Response<WeatherResponseCurrent> response) {
@@ -134,7 +154,7 @@ public class CityRepository {
                     assert weatherResponse != null;
                     _degrees.postValue(weatherResponse.main.temp);
                     SimpleDateFormat sd = new SimpleDateFormat("dd MMMM yyyy");
-                    _date.postValue(sd.format(new Date((long)weatherResponse.dt * 1000)));
+                    _date.postValue(sd.format(new Date((long) weatherResponse.dt * 1000)));
                     _description.postValue(weatherResponse.weather.get(0).description);
                     _city.postValue(weatherResponse.name);
                     _cityId.postValue(weatherResponse.id);
@@ -145,7 +165,38 @@ public class CityRepository {
 
             @Override
             public void onFailure(Call<WeatherResponseCurrent> call, Throwable t) {
-                Log.d("HomeViewModel", t.getMessage());
+                Log.d("CityRepository", t.getMessage());
+            }
+        });
+    }
+
+    public void getCurrentDataByLocation(double lat, double lon) {
+        Retrofit retrofit = new Retrofit.Builder()
+                .baseUrl("https://api.openweathermap.org/")
+                .addConverterFactory(GsonConverterFactory.create())
+                .build();
+        WeatherServiceCurrent service = retrofit.create(WeatherServiceCurrent.class);
+        Call<WeatherResponseCurrent> call = service.getCurrentWeatherDataByLocation(String.valueOf(lat), String.valueOf(lon), "ru", "metric", "f955e39cc8ec50741acb39727ead90dd");
+        call.enqueue(new Callback<WeatherResponseCurrent>() {
+            @Override
+            public void onResponse(Call<WeatherResponseCurrent> call, Response<WeatherResponseCurrent> response) {
+                if (response.code() == 200) {
+                    WeatherResponseCurrent weatherResponse = response.body();
+                    assert weatherResponse != null;
+                    _degrees.postValue(weatherResponse.main.temp);
+                    SimpleDateFormat sd = new SimpleDateFormat("dd MMMM yyyy");
+                    _date.postValue(sd.format(new Date((long) weatherResponse.dt * 1000)));
+                    _description.postValue(weatherResponse.weather.get(0).description);
+                    _city.postValue(weatherResponse.name);
+                    _cityId.postValue(weatherResponse.id);
+                    _icon.postValue("https://openweathermap.org/img/wn/" + weatherResponse.weather.get(0).icon + "@2x.png");
+                    getForecastData(weatherResponse.coord.lat, weatherResponse.coord.lon);
+                }
+            }
+
+            @Override
+            public void onFailure(Call<WeatherResponseCurrent> call, Throwable t) {
+                Log.d("CityRepository", t.getMessage());
             }
         });
     }
@@ -163,20 +214,21 @@ public class CityRepository {
                 if (response.code() == 200) {
                     WeatherResponseForecast weatherResponse = response.body();
                     assert weatherResponse != null;
-                    Log.d("HomeViewModel", _daily.toString());
                     _daily.postValue(weatherResponse.daily);
                 }
             }
 
             @Override
             public void onFailure(Call<WeatherResponseForecast> call, Throwable t) {
-                Log.d("HomeViewModel", t.getMessage());
+                Log.d("CityRepository", t.getMessage());
             }
         });
     }
 
 
-    //Async functions
+    /* ASYNC FUNCTIONS */
+
+
     private static class InsertCityAsyncTask extends AsyncTask<City, Void, Void> {
         private CityDao cityDao;
 

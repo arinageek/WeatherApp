@@ -39,6 +39,7 @@ public class NotificationFragment extends Fragment{
     private NotificationViewModel viewModel;
     private SharedPreferences sharedPref;
     private SharedPreferences.Editor editor;
+    private static Calendar c;
 
     @Nullable
     @Override
@@ -52,36 +53,38 @@ public class NotificationFragment extends Fragment{
         binding.setFragment(this);
 
         //Initializing shared preferences
-        sharedPref = getActivity().getPreferences(Context.MODE_PRIVATE);
+        sharedPref = getActivity().getSharedPreferences("notification_shared_pref",Context.MODE_PRIVATE);
         editor = sharedPref.edit();
 
         binding.city.setText("Выбранный город: "+sharedPref.getString("notification_city", ""));
-        binding.time.setText("Время оповещения: "+sharedPref.getString("notification_time", ""));
+        if(!sharedPref.getString("notification_time", "").equals("none")) {
+            binding.time.setText("Время оповещения: "+sharedPref.getString("notification_time", ""));
+        }else{
+            binding.time.setText("Оповещения отключены");
+        }
 
         //OnClickListeners
-        binding.btnChooseCity.setOnClickListener(v ->{
+        binding.btnSettings.setOnClickListener(v ->{
             viewModel.getAllCities().observe(getViewLifecycleOwner(), cities ->{
-                CharSequence[] cityNames = new CharSequence[cities.size()];
-                for(int i=0; i<cities.size(); i++){
-                    cityNames[i] = cities.get(i).getName();
+                if(!cities.isEmpty()) {
+                    CharSequence[] cityNames = new CharSequence[cities.size()];
+                    for (int i = 0; i < cities.size(); i++) {
+                        cityNames[i] = cities.get(i).getName();
+                    }
+                    ChooseCityDialog dialog = new ChooseCityDialog(cityNames);
+                    dialog.show(getChildFragmentManager(), "choose city dialog");
+                    dialog.setOnSelectedListener(city -> {
+                        binding.city.setText("Выбранный город: " + cityNames[city].toString());
+                        editor.putString("notification_city", cityNames[city].toString());
+                        editor.apply();
+                        showTimePicker();
+                    });
+                }else{
+                    Toast.makeText(getContext(), "Отсутствуют сохраненные города", Toast.LENGTH_SHORT).show();
                 }
-                ChooseCityDialog dialog = new ChooseCityDialog(cityNames);
-                dialog.show(getChildFragmentManager(), "choose city dialog");
-                dialog.setOnSelectedListener(city -> {
-                    binding.city.setText("Выбранный город: "+cityNames[city].toString());
-                    editor.putString("notification_city", cityNames[city].toString());
-                    editor.apply();
-                });
             });
         });
 
-        binding.btnChooseTime.setOnClickListener(v ->{
-            TimePickerFragment timePicker = new TimePickerFragment();
-            timePicker.show(getActivity().getSupportFragmentManager(), "time picker");
-            timePicker.setOnSelectedListener(((hourOfDay, minute) -> {
-                onTimeSet(hourOfDay, minute);
-            }));
-        });
 
         binding.btnRemoveAlarm.setOnClickListener(v ->{
             cancelAlarm();
@@ -89,34 +92,47 @@ public class NotificationFragment extends Fragment{
         return view;
     }
 
+    public void showTimePicker(){
+        TimePickerFragment timePicker = new TimePickerFragment();
+        timePicker.show(getActivity().getSupportFragmentManager(), "time picker");
+        timePicker.setOnSelectedListener(((hourOfDay, minute) -> {
+            onTimeSet(hourOfDay, minute);
+        }));
+    }
+
     public void onTimeSet(int hourOfDay, int minute) {
-        Calendar c = Calendar.getInstance();
+        c = Calendar.getInstance();
         c.set(Calendar.HOUR_OF_DAY, hourOfDay);
         c.set(Calendar.MINUTE, minute);
         c.set(Calendar.SECOND, 0);
-        updateTimeText(c);
-        startAlarm(c);
+        updateTimeText();
+        startAlarm();
     }
-    private void updateTimeText(Calendar c) {
+
+    private void updateTimeText() {
         String timeText = DateFormat.getTimeInstance(DateFormat.SHORT).format(c.getTime());
         binding.time.setText("Время оповещения: "+timeText);
         editor.putString("notification_time", timeText);
         editor.apply();
     }
-    private void startAlarm(Calendar c) {
+
+    private void startAlarm() {
         AlarmManager alarmManager = (AlarmManager) getActivity().getSystemService(Context.ALARM_SERVICE);
         Intent intent = new Intent(getActivity(), AlertReceiver.class);
         PendingIntent pendingIntent = PendingIntent.getBroadcast(getActivity(), 1, intent, 0);
         if (c.before(Calendar.getInstance())) {
             c.add(Calendar.DATE, 1);
         }
-        alarmManager.setExact(AlarmManager.RTC_WAKEUP, c.getTimeInMillis(), pendingIntent);
+        alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, c.getTimeInMillis(), pendingIntent);
     }
+
     private void cancelAlarm() {
         AlarmManager alarmManager = (AlarmManager) getActivity().getSystemService(Context.ALARM_SERVICE);
         Intent intent = new Intent(getActivity(), AlertReceiver.class);
         PendingIntent pendingIntent = PendingIntent.getBroadcast(getActivity(), 1, intent, 0);
         alarmManager.cancel(pendingIntent);
-        binding.time.setText("Alarm canceled");
+        binding.time.setText("Оповещения отключены");
+        editor.putString("notification_time", "none");
+        editor.apply();
     }
 }
