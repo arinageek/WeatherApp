@@ -56,9 +56,9 @@ public class NotificationFragment extends Fragment{
         sharedPref = getActivity().getSharedPreferences("notification_shared_pref",Context.MODE_PRIVATE);
         editor = sharedPref.edit();
 
-        binding.city.setText("Выбранный город: "+sharedPref.getString("notification_city", ""));
+        binding.city.setText(getString(R.string.chosen_city)+" "+sharedPref.getString("notification_city", ""));
         if(!sharedPref.getString("notification_time", "").equals("none")) {
-            binding.time.setText("Время оповещения: "+sharedPref.getString("notification_time", ""));
+            binding.time.setText(getString(R.string.chosen_time)+" "+sharedPref.getString("notification_time", ""));
         }else{
             binding.time.setText("Оповещения отключены");
         }
@@ -74,7 +74,7 @@ public class NotificationFragment extends Fragment{
                     ChooseCityDialog dialog = new ChooseCityDialog(cityNames);
                     dialog.show(getChildFragmentManager(), "choose city dialog");
                     dialog.setOnSelectedListener(city -> {
-                        binding.city.setText("Выбранный город: " + cityNames[city].toString());
+                        binding.city.setText(getString(R.string.chosen_city)+" " + cityNames[city].toString());
                         editor.putString("notification_city", cityNames[city].toString());
                         editor.apply();
                         showTimePicker();
@@ -111,7 +111,7 @@ public class NotificationFragment extends Fragment{
 
     private void updateTimeText() {
         String timeText = DateFormat.getTimeInstance(DateFormat.SHORT).format(c.getTime());
-        binding.time.setText("Время оповещения: "+timeText);
+        binding.time.setText(getString(R.string.chosen_time)+" "+timeText);
         editor.putString("notification_time", timeText);
         editor.apply();
     }

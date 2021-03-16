@@ -108,7 +108,7 @@
                     android:id="@+id/maps_btn"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="На карте"
+                    android:text="@string/on_map"
                     android:backgroundTint="@color/light_purple"/>
             </LinearLayout>
 

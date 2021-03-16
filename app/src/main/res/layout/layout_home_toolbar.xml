@@ -9,30 +9,16 @@
         android:layout_width="match_parent"
         android:layout_height="?attr/actionBarSize"
         android:weightSum="100"
+        android:layout_marginStart="32dp"
         android:orientation="horizontal"
         android:background="@color/white"
         android:gravity="center_vertical">
 
-        <RelativeLayout
-            android:id="@+id/toolbar_title"
-            android:layout_width="0dp"
-            android:layout_weight="25"
-            android:layout_height="wrap_content">
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:textColor="@color/black"
-                android:text="Weather"
-                android:textSize="16dp"
-                android:layout_alignParentStart="true" />
-
-        </RelativeLayout>
 
         <RelativeLayout
             android:id="@+id/toolbar_search_field"
             android:layout_width="0dp"
-            android:layout_weight="60"
+            android:layout_weight="85"
             android:paddingHorizontal="8dp"
             android:layout_height="wrap_content"
             android:visibility="invisible">
@@ -40,7 +26,7 @@
             <EditText
                 android:id="@+id/et_search_field"
                 android:layout_width="match_parent"
-                android:hint="Введите город"
+                android:hint="@string/enter_city"
                 android:textColor="@color/black"
                 android:layout_alignParentEnd="true"
                 android:layout_height="wrap_content" />

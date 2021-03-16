@@ -19,15 +19,8 @@ public interface CityDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     void insert(City city);
 
-    @Update
-    void update(City city);
-
     @Query("DELETE FROM cities_table WHERE cityId = :cityId")
     void delete(int cityId);
-
-    @Transaction
-    @Query("DELETE FROM cities_table")
-    void deleteAllCities();
 
     @Query("SELECT * FROM cities_table")
     LiveData<List<City>> getAllCities();
