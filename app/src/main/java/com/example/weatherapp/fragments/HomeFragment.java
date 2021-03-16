@@ -58,6 +58,7 @@ public class HomeFragment extends Fragment {
         View view = binding.getRoot();
 
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(getActivity());
+        requestLocation();
 
         //creating an instance of HomeViewModel and binding it
         homeViewModel = new ViewModelProvider(this).get(HomeViewModel.class);
@@ -140,11 +141,46 @@ public class HomeFragment extends Fragment {
         return view;
     }
 
+
+    @Override
+    public void onStart() {
+        super.onStart();
+        requestLocation();
+    }
+
+    public void requestLocation(){
+        LocationRequest mLocationRequest = LocationRequest.create();
+        mLocationRequest.setInterval(60000);
+        mLocationRequest.setFastestInterval(5000);
+        mLocationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
+        LocationCallback mLocationCallback = new LocationCallback() {
+            @Override
+            public void onLocationResult(LocationResult locationResult) {
+                if (locationResult == null) {
+                    return;
+                }
+                for (Location location : locationResult.getLocations()) {
+                    if (location != null) {
+                        //TODO: UI updates.
+                    }
+                }
+            }
+        };
+        if (ActivityCompat.checkSelfPermission(getActivity(), Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(getActivity(),
+                    new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
+                    REQUEST_CODE_LOCATION_PERMISSION);
+            return;
+        }
+        LocationServices.getFusedLocationProviderClient(getActivity()).requestLocationUpdates(mLocationRequest, mLocationCallback, null);
+    }
+
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         if (requestCode == REQUEST_CODE_LOCATION_PERMISSION && grantResults.length > 0) {
             if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                requestLocation();
                 getCurrentLocation();
             } else {
                 Toast.makeText(getActivity(), "Разрешение не предоставлено!", Toast.LENGTH_SHORT).show();
