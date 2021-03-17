@@ -9,6 +9,8 @@ Android Studio version 4.1
 
 compileSdkVersion: 30, minSdkVersion: 28
 
+JDK 8, java version "1.8.0_261"
+
 Склонируйте данный репозиторий и откройте его в **Android Studio**
 ```bash
 git clone https://github.com/arinageek/WeatherApp.git
